@@ -11,10 +11,16 @@ const kafka = new Kafka({
 const consumerGroupId = process.env.KAFKA_CONSUMER_GROUP_ID
 const topic = process.env.CONSUMER_TOPIC;
 
-module.exports = async () => {
+module.exports = async (io) => {
 	const consumer = kafka.consumer({ groupId: consumerGroupId });
 
 	await consumer.connect();
 	await consumer.subscribe({ topic, fromBeginning: true });
-	return consumer
+
+	await consumer.run({
+		eachMessage: async ({ topic, partition, message }) => {
+			await io.emit(topic, message.value.toString())
+			console.log({ topic, partition, message, messageContent: message.value.toString() });
+		},
+	});
 };

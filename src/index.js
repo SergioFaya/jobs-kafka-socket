@@ -20,3 +20,5 @@ const consumer = require("./consumer")(io);
 
 const PORT = process.env.PORT;
 io.listen(PORT);
+
+require('./proxy');

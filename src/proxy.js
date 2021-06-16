@@ -5,6 +5,13 @@ const axios = require('axios');
 const PORT_PROXY = process.env.PORT_PROXY;
 const PROCESSOR_HOST = process.env.PROCESSOR_HOST;
 
+
+app.use(function (req, res, next) {
+	res.header("Access-Control-Allow-Origin", "*"); // update to match the domain you will make the request from
+	res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+	next();
+});
+
 app.get('/', async function (_req, res) {
 	axios
 		.get(PROCESSOR_HOST)
@@ -65,8 +72,30 @@ app.get('/salary/:amount', async function (req, res) {
 		});
 });
 
+app.get('/charts/bar', async function (req, res) {
+	axios
+		.get(PROCESSOR_HOST)
+		.then(function (response) {
+			const jobs = response.data;
+			const tags = jobs
+				.flatMap(job => job.tags)
+			const groupedObject = groupBy(tags)
+			const result = Object.entries(groupedObject).map(([key, value]) => {
+				return { tag: key, count: value.length }
+			})
+			res.send(result);
+		})
+		.catch(function (error) {
+			res.send(error);
+		});
+});
 
-
+var groupBy = function (xs, key) {
+	return xs.reduce(function (rv, x) {
+		(rv[x] = rv[x] || []).push(x);
+		return rv;
+	}, {});
+};
 app.listen(PORT_PROXY, '0.0.0.0', () => {
 	console.log('proxy listening on port ', PORT_PROXY)
 })
